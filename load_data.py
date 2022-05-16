@@ -1,3 +1,5 @@
+from tensorflow.keras.utils import image_dataset_from_directory
+
 def load():
 	train = image_dataset_from_directory("./train", image_size=(224, 224))
 	val = image_dataset_from_directory("./valid", image_size=(224, 224))
