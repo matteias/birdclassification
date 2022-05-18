@@ -16,8 +16,12 @@ train, val, test = load()
 resnet = ResNet50(weights='imagenet')
 
 data_augmentation = tf.keras.Sequential([
-  layers.RandomFlip("horizontal_and_vertical"),
-  layers.RandomRotation(0.2),
+  layers.Rescaling(scale=1.0 / 255),
+    layers.RandomFlip("horizontal"),
+    layers.RandomZoom(
+        height_factor=(-0.05, -0.15),
+        width_factor=(-0.05, -0.15)),
+    layers.RandomRotation(0.2)
 ])
 
 for layer in resnet.layers:
@@ -36,7 +40,7 @@ model.build(input_shape=(None, 224, 224, 3))
 
 print(model.summary())
 
-model.fit(train, validation_data=val, epochs=10)
-#model.evaluate(test)
+model.fit(train, validation_data=val, epochs=20)
+model.evaluate(test)
 
-#model.save("bird_model")
+model.save("bird_model")
