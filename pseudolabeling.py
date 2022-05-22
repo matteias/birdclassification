@@ -14,17 +14,19 @@ from load_data import get_data_from_csv
 val = image_dataset_from_directory("./valid", image_size=(224, 224))
 #test = image_dataset_from_directory("./test", image_size=(224, 224), labels=None)
 
-frac = 0.8 # Fraction of used labels
+frac = 0.1 # Fraction of used labels
 
 labeled_x, labeled_y, unlabeled_x, unlabeled_y = get_data_from_csv(frac, labeled = True, unlabeled = True)
 
 
-model = tf.keras.models.load_model('good_model')
+model = tf.keras.models.load_model('bird_model_unsupervised')
 
+predict_batch_size = unlabeled_x.shape[0] // 50 
+pseudo_y = np.zeros(unlabeled_x.shape[0])
+for i in range(unlabeled_x.shape[0] // predict_batch_size): 
+    pseudo_y[i*predict_batch_size:(i+1)*predict_batch_size] = np.argmax(model.predict(unlabeled_x[i*predict_batch_size:(i+1)*predict_batch_size]), axis=1)
 
-pseudo_y = model.predict(unlabeled_x)
-
-print(pseudo_y.shape)
+print(pseudo_y)
 
 train_x = np.concatenate((labeled_x, unlabeled_x), axis = 0)
 train_y = np.concatenate((labeled_y, pseudo_y), axis = 0)
@@ -62,4 +64,4 @@ for epoch in range(epochs):
 
 #model.evaluate(test)
 
-model.save("semi_model")
+model.save("semi_model_10")
