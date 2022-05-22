@@ -1,12 +1,12 @@
 from tensorflow.keras.applications.resnet50 import ResNet50
 import tensorflow as tf
-import PIL
+#import PIL
 import cv2
 #from load_data import load
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.utils import image_dataset_from_directory
-import pandas as pd
+#import pandas as pd
 import csv
 import numpy as np
 
@@ -18,8 +18,8 @@ val = image_dataset_from_directory("./valid", image_size=(224, 224))
 
 #print(train.labels)
 
-data = pd.read_csv('birds.csv')
-print(data.iteritems())
+#data = pd.read_csv('birds.csv')
+#print(data.iteritems())
 
 frac = 0.5
 
@@ -28,8 +28,8 @@ print('Using ' + str(used_labels) + ' labeled image per category')
 labeled_y = np.zeros(used_labels*400)
 labeled_x = np.zeros((used_labels*400, 224, 224, 3))
 
-unlabeled_y = []
-unlabeled_x = []
+#unlabeled_y = []
+#unlabeled_x = []
 i = 0
 with open('./birds.csv') as csv_file:
     csv_reader = csv.reader(csv_file, delimiter=',')
@@ -77,11 +77,11 @@ print(labeled_x.shape)
 #labeled_x = labeled_x[None,:,:,:,:]
 #print(labeled_x.shape)
 
-labeled_data = tf.data.Dataset.from_tensor_slices((labeled_x, labeled_y))
-print(labeled_data.element_spec)
+#labeled_data = tf.data.Dataset.from_tensor_slices((labeled_x, labeled_y))
+#print(labeled_data.element_spec)
 
 #labeled_data.shape = [None, 224, 224,3]
-print(labeled_data.element_spec)
+#print(labeled_data.element_spec)
 
 #for element in train.as_numpy_iterator():
 #    print(element)
@@ -105,11 +105,14 @@ for layer in resnet.layers:
 resnet.layers[-1].trainable = True
 #merged = Concatenate([model, random_rotation])
 
+model = resnet
+'''
 model = tf.keras.Sequential([
     data_augmentation,
     resnet
 
 ])
+'''
 
 model.compile('Adam', loss=tf.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
 model.build(input_shape=(None, 224, 224, 3))
@@ -125,7 +128,7 @@ es = tf.keras.callbacks.EarlyStopping(
     baseline=None,
     restore_best_weights=True)
 
-model.fit(x=labeled_x, y=labeled_y, validation_data=val, epochs=10, callbacks=[es])
+model.fit(x=labeled_x, y=labeled_y, validation_data=val, epochs=10, callbacks=[es], batch_size=32)
 #model.evaluate(test)
 
 model.save("bird_model10_labels")
