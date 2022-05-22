@@ -22,7 +22,7 @@ print('Using ' + str(used_labels) + ' labeled images per category')
 labeled_y = np.zeros(used_labels*400)
 labeled_x = np.zeros((used_labels*400, 224, 224, 3))
 
-unlabeled_y = np.zeros(58388-used_labels*400)
+#unlabeled_y = np.zeros(58388-used_labels*400)
 unlabeled_x = np.zeros((58388-used_labels*400, 224, 224, 3))
 
 i = 0
@@ -39,7 +39,7 @@ with open('./birds.csv') as csv_file:
                     #labeled_x[i, :, :, :] = img
                     #i += 1
                 else:
-                    unlabeled_y[i] = int(row[0])
+                    #unlabeled_y[i] = int(row[0])
                     img = cv2.imread(row[1])
                     unlabeled_x[j, :, :, :] = img
                     j += 1
@@ -53,7 +53,7 @@ with open('./birds.csv') as csv_file:
                     i += 1
 
                 else:
-                    unlabeled_y[j] = int(row[0])
+                    #unlabeled_y[j] = int(row[0])
                     img = cv2.imread(row[1])
                     unlabeled_x[j, :, :, :] = img
                     j += 1
