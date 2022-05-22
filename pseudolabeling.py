@@ -11,12 +11,12 @@ import random
 from load_data import get_data_from_csv
 
 #train = image_dataset_from_directory("./train", image_size=(224, 224), labels=None)
-#val = image_dataset_from_directory("./valid", image_size=(224, 224))
+val = image_dataset_from_directory("./valid", image_size=(224, 224))
 #test = image_dataset_from_directory("./test", image_size=(224, 224), labels=None)
 
 frac = 0.8 # Fraction of used labels
 
-labeled_x, labeled_y, unlabeled_x, unlabeled_y = get_data_from_csv(frac, labeled = False, unlabeled = True)
+labeled_x, labeled_y, unlabeled_x, unlabeled_y = get_data_from_csv(frac, labeled = True, unlabeled = True)
 
 
 model = tf.keras.models.load_model('good_model')
@@ -24,10 +24,13 @@ model = tf.keras.models.load_model('good_model')
 
 pseudo_y = model.predict(unlabeled_x)
 
-print(pseudo_y)
+print(pseudo_y.shape)
 
-train_x = unlabeled_x
-train_y = pseudo_y
+train_x = np.concatenate((labeled_x, unlabeled_x), axis = 0)
+train_y = np.concatenate((labeled_y, pseudo_y), axis = 0)
+
+print(train_x.shape)
+print(train_y.shape)
 
 epochs = 10
 batch_size = 32
@@ -59,4 +62,4 @@ for epoch in range(epochs):
 
 #model.evaluate(test)
 
-model.save("bird_model_pseudo_" + str(frac))
+model.save("semi_model")
