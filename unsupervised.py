@@ -11,20 +11,19 @@ import csv
 import numpy as np
 
 #train = image_dataset_from_directory("./train", image_size=(224, 224), labels=None)
-val = image_dataset_from_directory("./valid", image_size=(224, 224), labels=None)
+val = image_dataset_from_directory("./valid", image_size=(224, 224))
 #test = image_dataset_from_directory("./test", image_size=(224, 224), labels=None)
 
 #trainx, trainy = image_dataset_from_directory('./train', image_size=(224, 224))
 
 #print(train.labels)
-'''
+
 data = pd.read_csv('birds.csv')
 print(data.iteritems())
-'''
 
 frac = 0.5
 
-used_labels = 5#int(128*frac)
+used_labels = int(128*frac)
 print('Using ' + str(used_labels) + ' labeled image per category')
 labeled_y = np.zeros(used_labels*400)
 labeled_x = np.zeros((used_labels*400, 224, 224, 3))
@@ -66,25 +65,27 @@ with open('./birds.csv') as csv_file:
                 #print(row[1][-7:-4])
             #count+=1
 
-#print(labeled_y)
+print(labeled_y.shape)
 print(labeled_x.shape)
 #print(labeled_x[0,:,:,:])
 
 #labeled_x = tf.convert_to_tensor(labeled_x, dtype=tf.float32)
 #labeled_y = tf.convert_to_tensor(labeled_y, dtype=tf.float32)
-labeled_y = labeled_y[np.newaxis is None,:]
-labeled_x = labeled_x[np.newaxis is None,:,:,:,:]
+#labeled_y = labeled_y[np.newaxis is None,:]
+#labeled_x = labeled_x[np.newaxis is None,:,:,:,:]
 
 #labeled_x = labeled_x[None,:,:,:,:]
-print(labeled_x.shape)
+#print(labeled_x.shape)
 
 labeled_data = tf.data.Dataset.from_tensor_slices((labeled_x, labeled_y))
-#print(labeled_data.element_spec)
+print(labeled_data.element_spec)
+
 #labeled_data.shape = [None, 224, 224,3]
 print(labeled_data.element_spec)
 
 #for element in train.as_numpy_iterator():
 #    print(element)
+
 
 
 
@@ -124,7 +125,7 @@ es = tf.keras.callbacks.EarlyStopping(
     baseline=None,
     restore_best_weights=True)
 
-model.fit(labeled_data, validation_data=val, epochs=10, callbacks=[es])
+model.fit(x=labeled_x, y=labeled_y, validation_data=val, epochs=10, callbacks=[es])
 #model.evaluate(test)
 
 model.save("bird_model10_labels")
