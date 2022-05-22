@@ -15,54 +15,58 @@ import random
 val = image_dataset_from_directory("./valid", image_size=(224, 224))
 #test = image_dataset_from_directory("./test", image_size=(224, 224), labels=None)
 
-frac = 0.1
+def get_data_from_csv(frac, labeled = True, unlabeled =False):
+    used_labels = int(128*frac)
+    print('Using ' + str(used_labels) + ' labeled images per category')
 
-used_labels = 2#int(128*frac)
-print('Using ' + str(used_labels) + ' labeled images per category')
-labeled_y = np.zeros(used_labels*400)
-labeled_x = np.zeros((used_labels*400, 224, 224, 3))
+    print('labeled = ' + str(labeled) + ', unlabeled = ' + str(unlabeled))
+    print('Loading data...')
 
-#unlabeled_y = []
-#unlabeled_x = []
-i = 0
-with open('./birds.csv') as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    next(csv_reader)
-    for row in csv_reader:
-        #count = 0
-        if row[-1] == 'train':
-            try:
-                if int(row[1][-7:-4]) <= used_labels:
-                    labeled_y[i] = int(row[0])
-                    img = cv2.imread(row[1])
-                    labeled_x[i, :, :, :] = img
+    if unlabeled:
+        unlabeled_y = np.zeros(58388-used_labels*400)
+        unlabeled_x = np.zeros((58388-used_labels*400, 224, 224, 3))
+    else:
+        unlabeled_y = None
+        unlabeled_x = None
+
+    if labeled:
+        labeled_y = np.zeros(used_labels*400)
+        labeled_x = np.zeros((used_labels*400, 224, 224, 3))
+    else:
+        labeled_y = None
+        labeled_x = None
+
+    i = 0
+    j = 0
+    with open('./birds.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        next(csv_reader)
+        for row in csv_reader:
+            #count = 0
+            if row[-1] == 'train':
+                n = int( "".join(_ for _ in row[1] if _ in "1234567890") )
+                if n <= used_labels:
+                    if labeled:
+                        labeled_y[i] = int(row[0])
+                        img = cv2.imread(row[1])
+                        labeled_x[i, :, :, :] = img
                     i += 1
-                #else:
-                    #unlabeled_y.append(int(row[0]))
-                    #unlabeled_x.append(img)
-                    #print(img)
-
-            except:
-                if int(row[1][-6:-4]) <= used_labels:
-                    labeled_y[i] = int(row[0])
-                    img = cv2.imread(row[1])
-                    labeled_x[i, :, :, :] = img
-                    i += 1
-
-                #else:
-                    #unlabeled_y.append(int(row[0]))
-                    #unlabeled_x.append(img)
-                #print(row[1][-6:-4])
+                else:
+                    if unlabeled:
+                        unlabeled_y[i] = int(row[0])
+                        img = cv2.imread(row[1])
+                        unlabeled_x[j, :, :, :] = img
+                    j += 1
 
 
-            #print(row[0])
-                #print(row[1][-7:-4])
-            #count+=1
+    print('labeled images: ' + str(i))
+    print('unlabeled images: ' + str(j))
 
-print(labeled_y.shape)
-print(labeled_x.shape)
+    return labeled_x, labeled_y, unlabeled_x, unlabeled_y
 
+frac = 0.10
 
+labeled_x, labeled_y, unlabeled_x, unlabeled_y = get_data_from_csv(frac)
 
 resnet = ResNet50(weights='imagenet')
 
@@ -82,10 +86,12 @@ total_batch = labeled_x.shape[0] // batch_size
 print('number of batches: ' + str(total_batch))
 
 for epoch in range(epochs):
+    print('epoch: ' + str(epoch) + ', training...')
     indices = list(range(labeled_x.shape[0]))
     random.shuffle(indices)
 
     for i in range(total_batch):
+        print( str( int( i/total_batch * 100) ) + '% done', end = '\r')
         batch_indices = indices[batch_size * i: batch_size * (i + 1)]
 
         x_batch = np.array([labeled_x[i,:,:,:] for i in batch_indices])
@@ -98,8 +104,8 @@ for epoch in range(epochs):
 
     loss = model.evaluate(val)
     print('epoch: ' + str(epoch) + ' validation loss: ' + str(loss))
-    print('training...')
+
 
 #model.evaluate(test)
 
-model.save("bird_model_unsupervised")
+model.save("bird_model_unsupervised_" + str(frac))

@@ -6,75 +6,30 @@ import cv2
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.utils import image_dataset_from_directory
+
 #import pandas as pd
 import csv
 import numpy as np
 import random
+from unsupervised import get_data_from_csv
 
 #train = image_dataset_from_directory("./train", image_size=(224, 224), labels=None)
 val = image_dataset_from_directory("./valid", image_size=(224, 224))
 #test = image_dataset_from_directory("./test", image_size=(224, 224), labels=None)
 
-frac = 0.1
+frac = 0.9 # Fraction of used labels
 
-used_labels = int(128*frac)
-print('Using ' + str(used_labels) + ' labeled images per category')
-labeled_y = np.zeros(used_labels*400)
-labeled_x = np.zeros((used_labels*400, 224, 224, 3))
-
-#unlabeled_y = np.zeros(58388-used_labels*400)
-unlabeled_x = np.zeros((58388-used_labels*400, 224, 224, 3))
-
-i = 0
-with open('./birds.csv') as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    next(csv_reader)
-    for row in csv_reader:
-        #count = 0
-        if row[-1] == 'train':
-            try:
-                if int(row[1][-7:-4]) <= used_labels:
-                    #labeled_y[i] = int(row[0])
-                    #img = cv2.imread(row[1])
-                    #labeled_x[i, :, :, :] = img
-                    #i += 1
-                else:
-                    #unlabeled_y[i] = int(row[0])
-                    img = cv2.imread(row[1])
-                    unlabeled_x[j, :, :, :] = img
-                    j += 1
-                    #print(img)
-
-            except:
-                if int(row[1][-6:-4]) <= used_labels:
-                    #labeled_y[j] = int(row[0])
-                    #img = cv2.imread(row[1])
-                    #labeled_x[j, :, :, :] = img
-                    i += 1
-
-                else:
-                    #unlabeled_y[j] = int(row[0])
-                    img = cv2.imread(row[1])
-                    unlabeled_x[j, :, :, :] = img
-                    j += 1
-                #print(row[1][-6:-4])
+labeled_x, labeled_y, unlabeled_x, unlabeled_y = get_data_from_csv(frac, labeled = False, unlabeled = True)
 
 
-            #print(row[0])
-                #print(row[1][-7:-4])
-            #count+=1
-
-print('labeled images: ' + str(i))
-print('unlabeled images: ' + str(j))
-#print(labeled_y.shape)
-#print(labeled_x.shape)
+model = keras.models.load_model('saved_model')
 
 
+pseudo_y = model.predict(unlabeled_x)
 
-model = keras.models.load_model('bird_model_unsupervised')
+print(pseudo_y)
 
-
-
+'''
 epochs = 10
 batch_size = 32
 total_batch = labeled_x.shape[0] // batch_size
@@ -104,3 +59,4 @@ for epoch in range(epochs):
 #model.evaluate(test)
 
 model.save("bird_model_unsupervised")
+'''
