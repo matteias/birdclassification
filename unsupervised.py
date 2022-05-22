@@ -9,22 +9,16 @@ from tensorflow.keras.utils import image_dataset_from_directory
 #import pandas as pd
 import csv
 import numpy as np
+import random
 
 #train = image_dataset_from_directory("./train", image_size=(224, 224), labels=None)
 val = image_dataset_from_directory("./valid", image_size=(224, 224))
 #test = image_dataset_from_directory("./test", image_size=(224, 224), labels=None)
 
-#trainx, trainy = image_dataset_from_directory('./train', image_size=(224, 224))
+frac = 0.1
 
-#print(train.labels)
-
-#data = pd.read_csv('birds.csv')
-#print(data.iteritems())
-
-frac = 0.5
-
-used_labels = int(128*frac)
-print('Using ' + str(used_labels) + ' labeled image per category')
+used_labels = 2#int(128*frac)
+print('Using ' + str(used_labels) + ' labeled images per category')
 labeled_y = np.zeros(used_labels*400)
 labeled_x = np.zeros((used_labels*400, 224, 224, 3))
 
@@ -67,38 +61,10 @@ with open('./birds.csv') as csv_file:
 
 print(labeled_y.shape)
 print(labeled_x.shape)
-#print(labeled_x[0,:,:,:])
-
-#labeled_x = tf.convert_to_tensor(labeled_x, dtype=tf.float32)
-#labeled_y = tf.convert_to_tensor(labeled_y, dtype=tf.float32)
-#labeled_y = labeled_y[np.newaxis is None,:]
-#labeled_x = labeled_x[np.newaxis is None,:,:,:,:]
-
-#labeled_x = labeled_x[None,:,:,:,:]
-#print(labeled_x.shape)
-
-#labeled_data = tf.data.Dataset.from_tensor_slices((labeled_x, labeled_y))
-#print(labeled_data.element_spec)
-
-#labeled_data.shape = [None, 224, 224,3]
-#print(labeled_data.element_spec)
-
-#for element in train.as_numpy_iterator():
-#    print(element)
-
 
 
 
 resnet = ResNet50(weights='imagenet')
-
-data_augmentation = tf.keras.Sequential([
-  #layers.Rescaling(scale=1.0 / 255),
-    layers.RandomFlip("horizontal"),
-    layers.RandomZoom(
-        height_factor=(-0.05, -0.15),
-        width_factor=(-0.05, -0.15)),
-    layers.RandomRotation(0.2)
-])
 
 for layer in resnet.layers:
 	layer.trainable = False
@@ -106,29 +72,34 @@ resnet.layers[-1].trainable = True
 #merged = Concatenate([model, random_rotation])
 
 model = resnet
-'''
-model = tf.keras.Sequential([
-    data_augmentation,
-    resnet
-
-])
-'''
 
 model.compile('Adam', loss=tf.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
-model.build(input_shape=(None, 224, 224, 3))
 
-#print(model.summary())
+epochs = 10
+batch_size = 32
+total_batch = labeled_x.shape[0] // batch_size
 
-es = tf.keras.callbacks.EarlyStopping(
-    monitor="val_accuracy",
-    min_delta=0,
-    patience=3,
-    verbose=0,
-    mode="auto",
-    baseline=None,
-    restore_best_weights=True)
+print('number of batches: ' + str(total_batch))
 
-model.fit(x=labeled_x, y=labeled_y, validation_data=val, epochs=10, callbacks=[es], batch_size=32)
+for epoch in range(epochs):
+    indices = list(range(labeled_x.shape[0]))
+    random.shuffle(indices)
+
+    for i in range(total_batch):
+        batch_indices = indices[batch_size * i: batch_size * (i + 1)]
+
+        x_batch = np.array([labeled_x[i,:,:,:] for i in batch_indices])
+        y_batch = np.array([labeled_y[i] for i in batch_indices])
+
+        #print(i)
+        #print(y_batch.shape)
+
+        model.train_on_batch(x=x_batch, y=y_batch)
+
+    loss = model.evaluate(val)
+    print('epoch: ' + str(epoch) + ' validation loss: ' + str(loss))
+    print('training...')
+
 #model.evaluate(test)
 
-model.save("bird_model10_labels")
+model.save("bird_model_unsupervised")
