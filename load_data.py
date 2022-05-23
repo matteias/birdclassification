@@ -64,3 +64,33 @@ def get_data_from_csv(frac, labeled = True, unlabeled = False):
 	unlabeled_y = np.asarray(unlabeled_y)
 
 	return labeled_x, labeled_y, unlabeled_x, unlabeled_y
+
+
+def val_from_csv():
+	import numpy as np
+	import cv2
+	import csv
+	import random
+
+	print('Getting validation data...')
+
+
+    y = np.zeros(5*400)
+    x = np.zeros((5*400, 224, 224, 3))
+
+	i = 0
+	#hmm = 0
+	with open('./birds.csv') as csv_file:
+		csv_reader = csv.reader(csv_file, delimiter=',')
+		next(csv_reader)
+		for row in csv_reader:
+			if row[-1] == 'valid':
+				y[i] = int(row[0])
+				img = cv2.imread(row[1])
+				x[i, :, :, :] = img
+				i += 1
+
+	print('done fetching ' + str(i) + ' validation images')
+
+
+	return x, y
