@@ -23,7 +23,7 @@ import tensorflow_addons as tfa
 #val = image_dataset_from_directory("./valid", image_size=(224, 224))
 val_x, val_y = val_from_csv()
 
-frac = 0.01 # Fraction of used labels
+frac = 0.25 # Fraction of used labels
 
 labeled_x, labeled_y, unlabeled_x, unlabeled_y = get_data_from_csv(frac, labeled = True, unlabeled = True)
 
@@ -47,7 +47,7 @@ optimizers_and_layers = [(Adam(lr), teacher.layers[i]) for i, lr in zip(train_in
 optimizer = tfa.optimizers.MultiOptimizer(optimizers_and_layers)
 teacher.compile(optimizer, loss=tf.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
 
-epochs = 50
+epochs = 10
 batch_size = 32
 total_batch = labeled_x.shape[0] // batch_size
 
@@ -70,14 +70,14 @@ for epoch in range(epochs):
             print( str( int( i/total_batch * 100) ) + '% done' + ", loss: " +str(loss) + ", accuracy: " + str(accuracy) , end = '\r')
 
     loss, accuracy = teacher.evaluate(x = val_x, y = val_y)
-    with open("50_teacher_loss_"+str(frac)+".txt", 'a') as f:
+    with open("teacher_loss_"+str(frac)+".txt", 'a') as f:
             f.write(str(loss)+"\n")
-    with open("50_teacher_acc_"+str(frac)+".txt", 'a') as f:
+    with open("teacher_acc_"+str(frac)+".txt", 'a') as f:
             f.write(str(accuracy)+"\n")
 
 
 
-teacher.save("50_teacher_" + str(frac), include_optimizer=False)
+teacher.save("teacher_" + str(frac), include_optimizer=False)
 
 
 
@@ -132,10 +132,10 @@ for epoch in range(epochs):
 
     loss, accuracy= model.evaluate(x = val_x, y = val_y)
     print('epoch: ' + str(epoch) + ' validation loss: ' + str(loss) + ' validation accuracy: ' + str(accuracy))
-    with open("50_student_loss_"+str(frac)+".txt", 'a') as f:
+    with open("student_loss_"+str(frac)+".txt", 'a') as f:
             f.write(str(loss)+"\n")
-    with open("50_student_acc_"+str(frac)+".txt", 'a') as f:
+    with open("student_acc_"+str(frac)+".txt", 'a') as f:
             f.write(str(accuracy)+"\n")
 
 
-model.save("50_student_" + str(frac), include_optimizer=False )
+model.save("student_" + str(frac), include_optimizer=False )
