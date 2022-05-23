@@ -3,6 +3,7 @@ from tensorflow.keras.optimizers import Adam
 import keras
 import tensorflow as tf
 from load_data import load
+import tensorflow_addons as tfa
 
 train, val, test = load()
 
@@ -31,9 +32,10 @@ for i in train_indices:
 	
 
 # print(model.summary())
-optimizers_and_layers = [(Adam(lr), layer) for layer, lr in zip(train_indices+bn_indices, learning_rates)]
-
-model.compile('Adam', loss=tf.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
+optimizers_and_layers = [(Adam(lr), model.layers[i]) for i, lr in zip(train_indices, learning_rates)]
+print(optimizers_and_layers)
+optimizer = tfa.optimizers.MultiOptimizer(optimizers_and_layers)
+model.compile(optimizer, loss=tf.losses.SparseCategoricalCrossentropy(), metrics=['accuracy'])
 es = tf.keras.callbacks.EarlyStopping(
     monitor="val_accuracy",
     min_delta=0,
