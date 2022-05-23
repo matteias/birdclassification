@@ -75,8 +75,8 @@ def val_from_csv():
 	print('Getting validation data...')
 
 
-    y = np.zeros(5*400)
-    x = np.zeros((5*400, 224, 224, 3), dtype=np.dtype(np.uint8)))
+	y = np.zeros(5*400)
+	x = np.zeros((5*400, 224, 224, 3), dtype=np.dtype(np.uint8))
 
 	i = 0
 	#hmm = 0
