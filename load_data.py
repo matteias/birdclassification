@@ -27,7 +27,7 @@ def get_data_from_csv(frac, labeled = True, unlabeled = False):
 
 	if labeled:
 	    labeled_y = np.zeros(used_labels*400)
-	    labeled_x = np.zeros((used_labels*400, 224, 224, 3))
+	    labeled_x = np.zeros((used_labels*400, 224, 224, 3), dtype=np.dtype(np.uint8))
 	else:
 	    labeled_y = None
 	    labeled_x = None
@@ -60,7 +60,7 @@ def get_data_from_csv(frac, labeled = True, unlabeled = False):
 	print('labeled images: ' + str(i))
 	print('unlabeled images: ' + str(j))
 
-	unlabeled_x = np.asarray(unlabeled_x)
+	unlabeled_x = np.asarray(unlabeled_x, dtype=np.dtype(np.uint8))
 	unlabeled_y = np.asarray(unlabeled_y)
 
 	return labeled_x, labeled_y, unlabeled_x, unlabeled_y
