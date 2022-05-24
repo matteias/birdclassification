@@ -61,7 +61,7 @@ print("number of samples:", n_samples)
 # Prepare pseudo labels
 n_labeled = 10
 unlabeled_indices = get_unlabeled_indices(train_labels_original, n_labeled)
-train_labels[unlabeled_indices] = 400
+train_labels[unlabeled_indices] = 400 # Set unlabeled sample labels to an impossible class to make sure they can't be useful
 print("Made", len(unlabeled_indices), "unlabeled indices")
 weights = np.ones(n_samples) # Initialize all weights to 1
 weights[unlabeled_indices] = 0 # Set unlabeled sample weights to 0
@@ -69,16 +69,16 @@ weights[unlabeled_indices] = 0 # Set unlabeled sample weights to 0
 print("Using", n_labeled, "samples per class")
 
 es = tf.keras.callbacks.EarlyStopping(
-    monitor="val_loss",
+    monitor="val_accuracy",
     patience=3,
     verbose=1,
     mode="auto",
     restore_best_weights=True,
 )
 
-for percentile in range(80, -21, -20):
-	model = build_model() # build from scratch every time
+for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra iteration at the end
 	print()
+	model = build_model() # build from scratch every time
 	weights_dataset = tf.data.Dataset.from_tensor_slices(weights).batch(32)
 	labels_dataset = tf.data.Dataset.from_tensor_slices(train_labels).batch(32)
 	train = tf.data.Dataset.zip((train_samples, labels_dataset, weights_dataset))
@@ -89,9 +89,9 @@ for percentile in range(80, -21, -20):
 
 	if percentile >= 0:
 		print("Making pseudo labels, percentile", percentile)
-		pseudo_predictions = model.predict(train_samples, verbose=1)[unlabeled_indices] # predict on unlabeled samples
-		prediction_maxima = pseudo_predictions.max(axis=1)
-		threshold = np.percentile(prediction_maxima, q=percentile)
+		pseudo_predictions = model.predict(train_samples, verbose=1)[unlabeled_indices] # predict on all samples, get unlabeled ones
+		prediction_maxima = pseudo_predictions.max(axis=1) # Max prediction confidence per sample
+		threshold = np.percentile(prediction_maxima, q=percentile) # Calculate threshold based on confidence percentiles
 		print("Set threshold to", threshold)
 
 		pseudo_labels = pseudo_predictions >= threshold
@@ -99,10 +99,11 @@ for percentile in range(80, -21, -20):
 		confident_indices = unlabeled_indices[confident_indices_mask]
 		sparse_pseudo_labels = np.argmax(pseudo_labels, axis=1)[confident_indices_mask]
 
-		print("Using", np.sum(confident_indices_mask), "pseudo labels in next epoch")
-		correct = np.sum(train_labels_original[confident_indices] == sparse_pseudo_labels)
-		print("Correct pseudo labels:", correct)
-		train_labels[unlabeled_indices] = 400 # Set non-labeled samples to an impossible class to make sure they don't sneak through
+		n_pseudolabeled = np.sum(confident_indices_mask)
+		print("Using", n_pseudolabeled, "pseudo labels in next epoch")
+		n_correct = np.sum(train_labels_original[confident_indices] == sparse_pseudo_labels)
+		print(f"Correct pseudo labels: {n_correct} ({(100*n_correct//n_pseudolabeled)}%)")
+		train_labels[unlabeled_indices] = 400 # Set non-labeled samples to an impossible class again (just in case)
 		train_labels[confident_indices] = sparse_pseudo_labels
 
 		# Set pseudo labeled weights to 1, others to 0
