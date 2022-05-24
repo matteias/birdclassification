@@ -7,6 +7,8 @@ import numpy as np
 import tensorflow_addons as tfa
 import tensorflow_datasets as tfds
 import pickle
+import pathlib
+
 
 def get_unlabeled_indices(labels, n_labeled):
 	n_labels = len(np.unique(labels))
@@ -85,6 +87,7 @@ for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra 
 	train = tf.data.Dataset.zip((train_samples, labels_dataset, weights_dataset)) # rebuild every time using the unshuffled train samples (so weights and labels match up)
 	train = train.shuffle(buffer_size=32*8, reshuffle_each_iteration=True) # turn into a shuffling dataset for fitting
 	history = model.fit(train, validation_data=val, epochs=50, callbacks=[es])
+	pathlib.Path(save_directory).mkdir(parents=True, exist_ok=True) 
 	with open(save_directory +  f"/history_{percentile+20}.pickle", 'wb') as file_pi:
 		pickle.dump(history.history, file_pi)
 	model.save(save_directory + f"/history_{percentile+20}", include_optimizer=False)
