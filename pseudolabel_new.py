@@ -40,11 +40,11 @@ def build_model():
 	return model
 
 def load():
-	train = image_dataset_from_directory("./train", image_size=(224, 224), shuffle=False)
-	train_labels = train.map(lambda a, b: b)
+	train = image_dataset_from_directory("./train", image_size=(224, 224), shuffle=False) # Only need this for labels
+	train_labels = train.map(lambda a, b: b) # Extract labels from joint dataset 
 	train_labels = tfds.as_numpy(train_labels)
 	train_labels = np.concatenate([row for row in train_labels])
-	train = image_dataset_from_directory("./train", image_size=(224, 224), shuffle=False, labels=None)
+	train = image_dataset_from_directory("./train", image_size=(224, 224), shuffle=False, labels=None) # Load new training data without labels
 
 	val = image_dataset_from_directory("./valid", image_size=(224, 224))
 	test = image_dataset_from_directory("./test", image_size=(224, 224))
@@ -80,13 +80,14 @@ save_directory = f"./pseudolabel_experiment_{n_labeled}/"
 for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra iteration at the end
 	print()
 	model = build_model() # build from scratch every time
-	weights_dataset = tf.data.Dataset.from_tensor_slices(weights).batch(32)
-	labels_dataset = tf.data.Dataset.from_tensor_slices(train_labels).batch(32)
-	train = tf.data.Dataset.zip((train_samples, labels_dataset, weights_dataset))
-	train = train.shuffle(buffer_size=32*8, reshuffle_each_iteration=True)
+	weights_dataset = tf.data.Dataset.from_tensor_slices(weights).batch(32) # batch 32 to be compatible with train_samples
+	labels_dataset = tf.data.Dataset.from_tensor_slices(train_labels).batch(32) # same as above
+	train = tf.data.Dataset.zip((train_samples, labels_dataset, weights_dataset)) # rebuild every time using the unshuffled train samples (so weights and labels match up)
+	train = train.shuffle(buffer_size=32*8, reshuffle_each_iteration=True) # turn into a shuffling dataset for fitting
 	history = model.fit(train, validation_data=val, epochs=50, callbacks=[es])
-	with open(save_directory +  f"/history_{percentile+20}", 'wb') as file_pi:
+	with open(save_directory +  f"/history_{percentile+20}.pickle", 'wb') as file_pi:
 		pickle.dump(history.history, file_pi)
+	model.save(save_directory + f"/history_{percentile+20}", include_optimizer=False)
 
 	if percentile >= 0:
 		print("Making pseudo labels, percentile", percentile)
@@ -110,4 +111,3 @@ for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra 
 		# Set pseudo labeled weights to 1, others to 0
 		weights[unlabeled_indices] = confident_indices_mask
 
-model.save(save_directory +"model_"+str(n_labeled), include_optimizer=False)
