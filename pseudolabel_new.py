@@ -76,6 +76,7 @@ es = tf.keras.callbacks.EarlyStopping(
     restore_best_weights=True,
 )
 
+save_directory = f"./pseudolabel_experiment_{n_labeled}/"
 for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra iteration at the end
 	print()
 	model = build_model() # build from scratch every time
@@ -84,7 +85,7 @@ for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra 
 	train = tf.data.Dataset.zip((train_samples, labels_dataset, weights_dataset))
 	train = train.shuffle(buffer_size=32*8, reshuffle_each_iteration=True)
 	history = model.fit(train, validation_data=val, epochs=50, callbacks=[es])
-	with open(f"./pseudolabel_history_{n_labeled}_{percentile+20}", 'wb') as file_pi:
+	with open(save_directory +  f"/history_{percentile+20}", 'wb') as file_pi:
 		pickle.dump(history.history, file_pi)
 
 	if percentile >= 0:
@@ -109,4 +110,4 @@ for percentile in range(80, -21, -20): # Iterate down to -20 so we get an extra 
 		# Set pseudo labeled weights to 1, others to 0
 		weights[unlabeled_indices] = confident_indices_mask
 
-model.save("pseudolabel_model"+str(n_labeled), include_optimizer=False)
+model.save(save_directory +"model_"+str(n_labeled), include_optimizer=False)
