@@ -82,7 +82,7 @@ print("number of samples:", n_samples)
 
 
 # Prepare pseudo labels
-n_labeled = 12
+n_labeled = 60
 base_batch_size = 32
 # valid_batch_sizes = [32, 64, 128, 256]
 valid_batch_sizes = [32]

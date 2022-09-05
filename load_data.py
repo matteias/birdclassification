@@ -94,3 +94,32 @@ def val_from_csv():
 
 
 	return x, y
+
+def test_from_csv():
+	import numpy as np
+	import cv2
+	import csv
+	import random
+
+	print('Getting validation data...')
+
+
+	y = np.zeros(5*400)
+	x = np.zeros((5*400, 224, 224, 3), dtype=np.dtype(np.uint8))
+
+	i = 0
+	#hmm = 0
+	with open('./birds.csv') as csv_file:
+		csv_reader = csv.reader(csv_file, delimiter=',')
+		next(csv_reader)
+		for row in csv_reader:
+			if row[-1] == 'test':
+				y[i] = int(row[0])
+				img = cv2.imread(row[1])
+				x[i, :, :, :] = img
+				i += 1
+
+	print('done fetching ' + str(i) + ' validation images')
+
+
+	return x, y

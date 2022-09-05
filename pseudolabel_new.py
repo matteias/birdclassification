@@ -61,7 +61,7 @@ print("number of samples:", n_samples)
 
 
 # Prepare pseudo labels
-n_labeled = 10
+n_labeled = 60
 unlabeled_indices = get_unlabeled_indices(train_labels_original, n_labeled)
 train_labels[unlabeled_indices] = 400 # Set unlabeled sample labels to an impossible class to make sure they can't be useful
 print("Made", len(unlabeled_indices), "unlabeled indices")

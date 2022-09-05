@@ -9,6 +9,7 @@ from tensorflow.keras.utils import image_dataset_from_directory
 import numpy as np
 
 from load_data import get_data_from_csv
+import random
 
 #train = image_dataset_from_directory("./train", image_size=(224, 224), labels=None)
 val = image_dataset_from_directory("./valid", image_size=(224, 224))

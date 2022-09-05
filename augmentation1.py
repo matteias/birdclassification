@@ -5,10 +5,15 @@ from load_data import load
 from tensorflow.keras import layers
 from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.utils import image_dataset_from_directory
+import matplotlib.pyplot as plt
+
 
 
 train, val, test = load()
 
+for x, y in train:
+    for test in y:
+        print(test)
 #trainx, trainy = image_dataset_from_directory('./train', image_size=(224, 224))
 
 
@@ -21,7 +26,7 @@ data_augmentation = tf.keras.Sequential([
     layers.RandomZoom(
         height_factor=(-0.05, -0.15),
         width_factor=(-0.05, -0.15)),
-    layers.RandomRotation(0.2)
+    #layers.RandomRotation(0.2)
 ])
 
 for layer in resnet.layers:
@@ -43,12 +48,31 @@ print(model.summary())
 es = tf.keras.callbacks.EarlyStopping(
     monitor="val_accuracy",
     min_delta=0,
-    patience=3,
+    patience=6,
     verbose=0,
     mode="auto",
     baseline=None,
     restore_best_weights=True)
-model.fit(train, validation_data=val, epochs=20, callbacks=[es])
+history = model.fit(train, validation_data=val, epochs=50, callbacks=[es])
+# list all data in history
+print(history.history.keys())
+# summarize history for accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+
 model.evaluate(test)
 
 model.save("bird_model")
